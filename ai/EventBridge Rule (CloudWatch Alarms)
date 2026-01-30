@@ -1,0 +1,20 @@
+resource "aws_cloudwatch_event_rule" "cw_alarm" {
+  name = "cloudwatch-alarm-events"
+
+  event_pattern = jsonencode({
+    source = ["aws.cloudwatch"],
+    detail-type = ["CloudWatch Alarm State Change"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "lambda" {
+  rule = aws_cloudwatch_event_rule.cw_alarm.name
+  arn  = aws_lambda_function.alert_manager.arn
+}
+
+resource "aws_lambda_permission" "allow_eventbridge" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.alert_manager.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cw_alarm.arn
+}
